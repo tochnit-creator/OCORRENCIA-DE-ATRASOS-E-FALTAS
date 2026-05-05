@@ -2,496 +2,843 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Studio Score — Controle de Presença</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Studio Score</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0d0d0d;
-    --surface: #181818;
-    --surface2: #222222;
+    --surface: #1a1a1a;
+    --surface2: #242424;
     --border: #2e2e2e;
     --text: #f0f0f0;
-    --muted: #888;
+    --muted: #777;
     --green: #2ecc71;
     --yellow: #f1c40f;
     --red: #e74c3c;
     --accent: #e67e22;
-    --green-bg: rgba(46,204,113,0.08);
-    --yellow-bg: rgba(241,196,15,0.08);
-    --red-bg: rgba(231,76,60,0.08);
+    --green-dim: rgba(46,204,113,0.12);
+    --yellow-dim: rgba(241,196,15,0.12);
+    --red-dim: rgba(231,76,60,0.12);
+    --nav-h: 64px;
+    --header-h: 56px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-  body {
+  html, body {
+    height: 100%;
     background: var(--bg);
     color: var(--text);
     font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
+    overscroll-behavior: none;
   }
 
-  header {
+  /* ── HEADER ── */
+  .top-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--header-h);
+    background: var(--bg);
     border-bottom: 1px solid var(--border);
-    padding: 20px 32px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    background: var(--bg);
-    z-index: 100;
+    padding: 0 18px;
+    z-index: 200;
+    gap: 10px;
   }
 
-  header h1 {
+  .top-header h1 {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 2rem;
+    font-size: 1.6rem;
     letter-spacing: 3px;
     color: var(--accent);
+    flex: 1;
   }
 
-  header span {
-    font-size: 0.8rem;
-    color: var(--muted);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
-  .container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 32px 24px;
-  }
-
-  /* --- LEGEND --- */
-  .legend {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 32px;
-  }
-
-  .legend-item {
+  .month-pill {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 0.82rem;
-    color: var(--muted);
+    border-radius: 20px;
+    overflow: hidden;
   }
 
-  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .dot.green { background: var(--green); }
-  .dot.yellow { background: var(--yellow); }
-  .dot.red { background: var(--red); }
+  .month-pill button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    line-height: 1;
+    touch-action: manipulation;
+  }
 
-  /* --- ADD OCCURRENCE --- */
-  .add-section {
+  .month-pill button:active { background: var(--surface2); }
+
+  #month-label {
+    font-size: 0.72rem;
+    color: var(--text);
+    white-space: nowrap;
+    padding: 0 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── SCROLL AREA ── */
+  .page {
+    position: fixed;
+    top: var(--header-h);
+    left: 0; right: 0;
+    bottom: calc(var(--nav-h) + var(--safe-bottom));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: none;
+    flex-direction: column;
+  }
+
+  .page.active { display: flex; }
+
+  .page-inner {
+    padding: 16px 14px 20px;
+    flex: 1;
+  }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: calc(var(--nav-h) + var(--safe-bottom));
+    padding-bottom: var(--safe-bottom);
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 32px;
-  }
-
-  .add-section h2 {
-    font-family: 'Bebas Neue', sans-serif;
-    letter-spacing: 2px;
-    font-size: 1.2rem;
-    margin-bottom: 18px;
-    color: var(--muted);
-  }
-
-  .form-row {
+    border-top: 1px solid var(--border);
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: flex-end;
+    z-index: 200;
   }
 
-  .form-group {
+  .nav-btn {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    flex: 1;
-    min-width: 140px;
-  }
-
-  label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--muted);
-  }
-
-  select, input[type="date"], input[type="text"], input[type="number"] {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    outline: none;
-    transition: border 0.2s;
-    width: 100%;
-  }
-
-  select:focus, input:focus {
-    border-color: var(--accent);
-  }
-
-  button.add-btn {
-    background: var(--accent);
-    color: #fff;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: none;
     border: none;
-    border-radius: 8px;
-    padding: 10px 22px;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: opacity 0.2s;
-    height: 40px;
-    align-self: flex-end;
-  }
-
-  button.add-btn:hover { opacity: 0.85; }
-
-  /* --- MONTH SELECTOR --- */
-  .month-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .month-bar h2 {
-    font-family: 'Bebas Neue', sans-serif;
-    letter-spacing: 2px;
-    font-size: 1.4rem;
-  }
-
-  .month-controls {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .month-controls button {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 6px;
-    padding: 6px 14px;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.85rem;
-    transition: background 0.2s;
-  }
-
-  .month-controls button:hover { background: var(--surface2); }
-
-  #current-month-label {
-    font-size: 0.9rem;
     color: var(--muted);
-    min-width: 120px;
-    text-align: center;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: color 0.2s;
+    touch-action: manipulation;
+    padding-top: 6px;
   }
 
-  /* --- MEMBER CARDS --- */
-  .members-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 18px;
-  }
+  .nav-btn .icon { font-size: 1.3rem; line-height: 1; }
+  .nav-btn.active { color: var(--accent); }
+
+  /* ── PAGE: MEMBROS ── */
+  .members-list { display: flex; flex-direction: column; gap: 12px; }
 
   .member-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     overflow: hidden;
-    transition: transform 0.2s;
+    transition: transform 0.15s;
   }
 
-  .member-card:hover { transform: translateY(-2px); }
+  .member-card:active { transform: scale(0.98); }
 
-  .card-header {
+  .card-top {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 18px 20px 14px;
-    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+    gap: 12px;
+    cursor: pointer;
   }
 
-  .member-name {
-    font-weight: 600;
-    font-size: 1rem;
-  }
-
-  .member-role {
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-
-  .score-badge {
+  .avatar {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.8rem;
-    line-height: 1;
-    letter-spacing: 1px;
+    font-size: 1.2rem;
+    flex-shrink: 0;
   }
 
-  .status-bar {
-    height: 4px;
-    width: 100%;
-  }
+  .card-info { flex: 1; min-width: 0; }
 
-  .card-body {
-    padding: 14px 20px;
-  }
-
-  .status-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.78rem;
+  .card-name {
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 4px 10px;
-    border-radius: 100px;
-    margin-bottom: 12px;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .occurrences-list {
-    list-style: none;
+  .card-role {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .card-right {
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
     gap: 4px;
-    max-height: 130px;
-    overflow-y: auto;
   }
 
-  .occurrences-list::-webkit-scrollbar { width: 4px; }
-  .occurrences-list::-webkit-scrollbar-track { background: transparent; }
-  .occurrences-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .score-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.7rem;
+    line-height: 1;
+  }
 
-  .occ-item {
+  .status-chip {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 2px 8px;
+    border-radius: 100px;
+  }
+
+  .prog-bar {
+    height: 3px;
+    width: 100%;
+  }
+  .prog-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+
+  /* card accordion */
+  .card-detail {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    border-top: 0px solid var(--border);
+  }
+
+  .card-detail.open {
+    max-height: 500px;
+    border-top: 1px solid var(--border);
+  }
+
+  .card-detail-inner { padding: 10px 16px 14px; }
+
+  .occ-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.8rem;
-    color: var(--muted);
-    padding: 3px 0;
+    padding: 7px 0;
     border-bottom: 1px solid var(--border);
+    gap: 8px;
   }
 
-  .occ-item:last-child { border-bottom: none; }
+  .occ-row:last-child { border-bottom: none; }
 
-  .occ-points {
-    font-weight: 600;
-    font-size: 0.78rem;
+  .occ-info { font-size: 0.78rem; color: var(--muted); flex: 1; min-width: 0; }
+  .occ-info strong { display: block; color: var(--text); font-size: 0.8rem; }
+
+  .occ-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
   }
 
-  .occ-remove {
+  .occ-pts {
+    font-weight: 700;
+    font-size: 0.8rem;
+  }
+
+  .btn-del {
     background: none;
-    border: none;
-    color: #555;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
     cursor: pointer;
     font-size: 0.75rem;
-    padding: 0 4px;
-    line-height: 1;
-    transition: color 0.2s;
+    touch-action: manipulation;
+    flex-shrink: 0;
   }
-  .occ-remove:hover { color: var(--red); }
 
-  .no-occ {
+  .btn-del:active { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+  .no-occ-msg {
     font-size: 0.8rem;
     color: #444;
     font-style: italic;
+    padding: 6px 0;
   }
 
-  /* Status colors */
-  .green-card .status-bar { background: var(--green); }
-  .green-card .score-badge { color: var(--green); }
-  .green-card .status-label { background: var(--green-bg); color: var(--green); }
+  /* green/yellow/red theming */
+  .g .avatar { background: var(--green-dim); color: var(--green); }
+  .g .score-num { color: var(--green); }
+  .g .status-chip { background: var(--green-dim); color: var(--green); }
+  .g .prog-fill { background: var(--green); }
 
-  .yellow-card .status-bar { background: var(--yellow); }
-  .yellow-card .score-badge { color: var(--yellow); }
-  .yellow-card .status-label { background: var(--yellow-bg); color: var(--yellow); }
+  .y .avatar { background: var(--yellow-dim); color: var(--yellow); }
+  .y .score-num { color: var(--yellow); }
+  .y .status-chip { background: var(--yellow-dim); color: var(--yellow); }
+  .y .prog-fill { background: var(--yellow); }
 
-  .red-card .status-bar { background: var(--red); }
-  .red-card .score-badge { color: var(--red); }
-  .red-card .status-label { background: var(--red-bg); color: var(--red); }
+  .r .avatar { background: var(--red-dim); color: var(--red); }
+  .r .score-num { color: var(--red); }
+  .r .status-chip { background: var(--red-dim); color: var(--red); }
+  .r .prog-fill { background: var(--red); }
 
-  /* --- ADD MEMBER --- */
-  .add-member-section {
+  /* ── PAGE: REGISTRAR ── */
+  .form-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 20px 24px;
-    margin-bottom: 32px;
+    padding: 18px 16px;
+    margin-bottom: 14px;
   }
 
-  .add-member-section h2 {
+  .form-card h3 {
     font-family: 'Bebas Neue', sans-serif;
     letter-spacing: 2px;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    color: var(--muted);
     margin-bottom: 14px;
+  }
+
+  .field { margin-bottom: 12px; }
+
+  .field label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .field select,
+  .field input[type="date"],
+  .field input[type="text"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .field select:focus,
+  .field input:focus { border-color: var(--accent); }
+
+  .big-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: opacity 0.2s;
+    margin-top: 4px;
+  }
+
+  .big-btn:active { opacity: 0.8; }
+
+  /* type grid */
+  .type-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .type-opt {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    color: var(--muted);
+    cursor: pointer;
+    text-align: center;
+    touch-action: manipulation;
+    transition: all 0.15s;
+    line-height: 1.3;
+  }
+
+  .type-opt .type-icon { font-size: 1.2rem; display: block; margin-bottom: 4px; }
+  .type-opt .type-pts { font-size: 0.65rem; color: #555; display: block; margin-top: 2px; }
+
+  .type-opt.selected {
+    border-color: var(--accent);
+    background: rgba(230,126,34,0.1);
+    color: var(--text);
+  }
+
+  .type-opt.selected .type-pts { color: var(--accent); }
+
+  /* ── PAGE: LEGENDA ── */
+  .legend-section { margin-bottom: 16px; }
+
+  .legend-section h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    font-size: 1rem;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .rule-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    font-size: 0.88rem;
+  }
+
+  .rule-pts {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+  }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 8px;
+  }
+
+  .status-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+  .status-info { flex: 1; }
+  .status-info strong { display: block; font-size: 0.88rem; }
+  .status-info small { font-size: 0.75rem; color: var(--muted); }
+
+  /* ── PAGE: HISTÓRICO ── */
+  .hist-member-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .hist-member-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+  }
+
+  .hist-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .hist-member-name {
+    font-weight: 600;
+    font-size: 0.92rem;
+    flex: 1;
+  }
+
+  .hist-member-role {
+    font-size: 0.7rem;
     color: var(--muted);
   }
 
-  /* progress bar */
-  .prog-wrap {
-    margin-top: 10px;
-    background: var(--surface2);
-    border-radius: 4px;
-    height: 5px;
-    overflow: hidden;
-  }
-  .prog-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.4s;
+  .hist-chevron {
+    font-size: 0.7rem;
+    color: var(--muted);
+    transition: transform 0.25s;
   }
 
-  .empty-state {
+  .hist-months {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+  }
+
+  .hist-months.open { max-height: 1000px; }
+  .hist-months.open + .hist-member-header .hist-chevron,
+  .hist-member-header.expanded .hist-chevron { transform: rotate(180deg); }
+
+  .hist-month-row {
+    display: flex;
+    align-items: center;
+    padding: 9px 16px;
+    border-top: 1px solid var(--border);
+    gap: 10px;
+  }
+
+  .hist-month-name {
+    font-size: 0.82rem;
+    color: var(--muted);
+    width: 90px;
+    flex-shrink: 0;
+    text-transform: capitalize;
+  }
+
+  .hist-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .hist-status-text {
+    font-size: 0.82rem;
+    font-weight: 600;
+    flex: 1;
+  }
+
+  .hist-pts {
+    font-size: 0.75rem;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .hist-empty {
     text-align: center;
     color: var(--muted);
-    font-size: 0.9rem;
-    padding: 48px 0;
+    font-size: 0.85rem;
+    padding: 32px 0;
   }
 
-  @media (max-width: 600px) {
-    header { padding: 14px 16px; }
-    .container { padding: 20px 14px; }
-    .form-row { flex-direction: column; }
-    .members-grid { grid-template-columns: 1fr; }
+  /* ── PAGE: EQUIPE ── */
+  .add-form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 16px;
+    margin-bottom: 16px;
+  }
+
+  .add-form-card h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .team-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .team-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+
+  .team-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .team-info { flex: 1; min-width: 0; }
+  .team-name { font-weight: 600; font-size: 0.9rem; }
+  .team-role { font-size: 0.72rem; color: var(--muted); }
+
+  .btn-remove {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    touch-action: manipulation;
+  }
+
+  .btn-remove:active { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+  .empty-msg {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    padding: 32px 0;
+  }
+
+  /* toast */
+  .toast {
+    position: fixed;
+    bottom: calc(var(--nav-h) + var(--safe-bottom) + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.85rem;
+    padding: 10px 18px;
+    border-radius: 100px;
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 300;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 </style>
 </head>
 <body>
 
-<header>
+<!-- HEADER -->
+<header class="top-header">
   <h1>🎵 Studio Score</h1>
-  <span>Controle de Presença & Pontuação</span>
+  <div class="month-pill">
+    <button onclick="changeMonth(-1)">◀</button>
+    <span id="month-label"></span>
+    <button onclick="changeMonth(1)">▶</button>
+  </div>
 </header>
 
-<div class="container">
-
-  <!-- LEGEND -->
-  <div class="legend">
-    <div class="legend-item"><div class="dot green"></div> 0–3 pts — Verde: OK</div>
-    <div class="legend-item"><div class="dot yellow"></div> 4–6 pts — Alerta ⚠️</div>
-    <div class="legend-item"><div class="dot red"></div> 7+ pts — Reprovado 🚫</div>
-    <div class="legend-item">Falta ensaio: <b style="margin-left:4px;color:#f0f0f0">2 pts</b></div>
-    <div class="legend-item">Atraso ensaio: <b style="margin-left:4px;color:#f0f0f0">1 pt</b></div>
-    <div class="legend-item">Falta agenda: <b style="margin-left:4px;color:#f0f0f0">3 pts</b></div>
-    <div class="legend-item">Atraso agenda: <b style="margin-left:4px;color:#f0f0f0">2 pts</b></div>
-  </div>
-
-  <!-- ADD MEMBER -->
-  <div class="add-member-section">
-    <h2>➕ Adicionar Membro</h2>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Nome</label>
-        <input type="text" id="new-name" placeholder="Ex: João Silva">
-      </div>
-      <div class="form-group">
-        <label>Função</label>
-        <input type="text" id="new-role" placeholder="Ex: Vocal, Guitarra...">
-      </div>
-      <button class="add-btn" onclick="addMember()">Adicionar</button>
+<!-- PAGE: MEMBROS -->
+<div class="page active" id="page-home">
+  <div class="page-inner">
+    <div class="members-list" id="members-list">
+      <div class="empty-msg">Nenhum membro ainda.<br>Vá em Equipe para adicionar ☝️</div>
     </div>
   </div>
+</div>
 
-  <!-- ADD OCCURRENCE -->
-  <div class="add-section">
-    <h2>📋 Registrar Ocorrência</h2>
-    <div class="form-row">
-      <div class="form-group">
+<!-- PAGE: REGISTRAR -->
+<div class="page" id="page-reg">
+  <div class="page-inner">
+    <div class="form-card">
+      <h3>📋 Registrar Ocorrência</h3>
+
+      <div class="field">
         <label>Membro</label>
-        <select id="occ-member">
-          <option value="">Selecione...</option>
-        </select>
+        <select id="occ-member"><option value="">Selecione...</option></select>
       </div>
-      <div class="form-group">
+
+      <div class="field">
         <label>Data</label>
         <input type="date" id="occ-date">
       </div>
-      <div class="form-group">
-        <label>Tipo</label>
-        <select id="occ-type">
-          <option value="falta_ensaio">Falta no ensaio</option>
-          <option value="atraso_ensaio">Atraso no ensaio</option>
-          <option value="falta_agenda">Falta na agenda</option>
-          <option value="atraso_agenda">Atraso na agenda</option>
-        </select>
+
+      <div class="field">
+        <label>Tipo de Ocorrência</label>
+        <div class="type-grid">
+          <div class="type-opt selected" data-type="falta_ensaio" onclick="selectType(this)">
+            <span class="type-icon">🎶</span>
+            Falta no Ensaio
+            <span class="type-pts">−2 pts</span>
+          </div>
+          <div class="type-opt" data-type="atraso_ensaio" onclick="selectType(this)">
+            <span class="type-icon">⏰</span>
+            Atraso no Ensaio
+            <span class="type-pts">−1 pt</span>
+          </div>
+          <div class="type-opt" data-type="falta_agenda" onclick="selectType(this)">
+            <span class="type-icon">📅</span>
+            Falta na Agenda
+            <span class="type-pts">−3 pts</span>
+          </div>
+          <div class="type-opt" data-type="atraso_agenda" onclick="selectType(this)">
+            <span class="type-icon">🕐</span>
+            Atraso na Agenda
+            <span class="type-pts">−2 pts</span>
+          </div>
+        </div>
       </div>
-      <div class="form-group" style="max-width:160px">
+
+      <div class="field">
         <label>Observação (opcional)</label>
-        <input type="text" id="occ-note" placeholder="Ex: 15 min atraso">
+        <input type="text" id="occ-note" placeholder="Ex: 20 min de atraso...">
       </div>
-      <button class="add-btn" onclick="addOccurrence()">Registrar</button>
+
+      <button class="big-btn" onclick="addOccurrence()">✔ Registrar</button>
     </div>
   </div>
-
-  <!-- MONTH NAV -->
-  <div class="month-bar">
-    <h2>📅 Membros do Mês</h2>
-    <div class="month-controls">
-      <button onclick="changeMonth(-1)">◀</button>
-      <span id="current-month-label"></span>
-      <button onclick="changeMonth(1)">▶</button>
-    </div>
-  </div>
-
-  <!-- MEMBERS GRID -->
-  <div class="members-grid" id="members-grid">
-    <div class="empty-state">Nenhum membro cadastrado ainda. Adicione acima ☝️</div>
-  </div>
-
 </div>
 
+<!-- PAGE: LEGENDA -->
+<div class="page" id="page-info">
+  <div class="page-inner">
+    <div class="legend-section">
+      <h3>Pontuação por Ocorrência</h3>
+      <div class="rule-row">
+        <span>🎶 Falta no ensaio</span>
+        <span class="rule-pts" style="color:var(--red)">2 pts</span>
+      </div>
+      <div class="rule-row">
+        <span>⏰ Atraso no ensaio</span>
+        <span class="rule-pts" style="color:var(--yellow)">1 pt</span>
+      </div>
+      <div class="rule-row">
+        <span>📅 Falta na agenda</span>
+        <span class="rule-pts" style="color:var(--red)">3 pts</span>
+      </div>
+      <div class="rule-row">
+        <span>🕐 Atraso na agenda</span>
+        <span class="rule-pts" style="color:var(--yellow)">2 pts</span>
+      </div>
+    </div>
+
+    <div class="legend-section">
+      <h3>Status dos Membros</h3>
+      <div class="status-row">
+        <div class="status-dot" style="background:var(--green)"></div>
+        <div class="status-info">
+          <strong>🟢 Verde — OK</strong>
+          <small>0 a 3 pontos no mês</small>
+        </div>
+      </div>
+      <div class="status-row">
+        <div class="status-dot" style="background:var(--yellow)"></div>
+        <div class="status-info">
+          <strong>🟡 Alerta</strong>
+          <small>4 a 6 pontos — atenção necessária</small>
+        </div>
+      </div>
+      <div class="status-row">
+        <div class="status-dot" style="background:var(--red)"></div>
+        <div class="status-info">
+          <strong>🔴 Reprovado</strong>
+          <small>7+ pontos — fora das próximas agendas / candidato a backup</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: HISTÓRICO -->
+<div class="page" id="page-hist">
+  <div class="page-inner">
+    <div id="hist-list">
+      <div class="hist-empty">Nenhum dado ainda.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: EQUIPE -->
+<div class="page" id="page-team">
+  <div class="page-inner">
+    <div class="add-form-card">
+      <h3>➕ Novo Membro</h3>
+      <div class="field">
+        <label>Nome</label>
+        <input type="text" id="new-name" placeholder="Ex: João Silva">
+      </div>
+      <div class="field">
+        <label>Função</label>
+        <input type="text" id="new-role" placeholder="Ex: Vocal, Guitarra...">
+      </div>
+      <button class="big-btn" onclick="addMember()">Adicionar à Equipe</button>
+    </div>
+
+    <div class="team-list" id="team-list">
+      <div class="empty-msg">Nenhum membro cadastrado ainda.</div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="goPage('home', this)">
+    <span class="icon">👥</span>
+    Membros
+  </button>
+  <button class="nav-btn" onclick="goPage('reg', this)">
+    <span class="icon">✏️</span>
+    Registrar
+  </button>
+  <button class="nav-btn" onclick="goPage('hist', this)">
+    <span class="icon">📊</span>
+    Histórico
+  </button>
+  <button class="nav-btn" onclick="goPage('info', this)">
+    <span class="icon">ℹ️</span>
+    Regras
+  </button>
+  <button class="nav-btn" onclick="goPage('team', this)">
+    <span class="icon">⚙️</span>
+    Equipe
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
 <script>
-// ─── DATA ───────────────────────────────────────────────────────────────────
+// ── DATA ─────────────────────────────────────────────────────────────────────
 
-const POINTS = {
-  falta_ensaio: 2,
-  atraso_ensaio: 1,
-  falta_agenda: 3,
-  atraso_agenda: 2
-};
-
+const POINTS = { falta_ensaio:2, atraso_ensaio:1, falta_agenda:3, atraso_agenda:2 };
 const LABELS = {
-  falta_ensaio:   'Falta — Ensaio',
-  atraso_ensaio:  'Atraso — Ensaio',
-  falta_agenda:   'Falta — Agenda',
-  atraso_agenda:  'Atraso — Agenda'
+  falta_ensaio:'Falta — Ensaio',
+  atraso_ensaio:'Atraso — Ensaio',
+  falta_agenda:'Falta — Agenda',
+  atraso_agenda:'Atraso — Agenda'
 };
 
-let members = JSON.parse(localStorage.getItem('studio_members') || '[]');
-let occurrences = JSON.parse(localStorage.getItem('studio_occurrences') || '[]');
-
+let members = JSON.parse(localStorage.getItem('ss_members') || '[]');
+let occs = JSON.parse(localStorage.getItem('ss_occs') || '[]');
 let viewDate = new Date();
+let selectedType = 'falta_ensaio';
 
 function save() {
-  localStorage.setItem('studio_members', JSON.stringify(members));
-  localStorage.setItem('studio_occurrences', JSON.stringify(occurrences));
+  localStorage.setItem('ss_members', JSON.stringify(members));
+  localStorage.setItem('ss_occs', JSON.stringify(occs));
 }
 
-// ─── MONTH ──────────────────────────────────────────────────────────────────
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
 
-function changeMonth(delta) {
-  viewDate.setMonth(viewDate.getMonth() + delta);
+function goPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  btn.classList.add('active');
+  render();
+}
+
+// ── MONTH ─────────────────────────────────────────────────────────────────────
+
+function changeMonth(d) {
+  viewDate.setMonth(viewDate.getMonth() + d);
   render();
 }
 
@@ -499,136 +846,241 @@ function monthKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
 }
 
-function occMonth(occ) {
-  return occ.date.slice(0,7);
+// ── STATUS ────────────────────────────────────────────────────────────────────
+
+function getStatus(pts) {
+  if (pts <= 3) return { cls:'g', label:'✅ OK', chip:'OK' };
+  if (pts <= 6) return { cls:'y', label:'⚠️ Alerta', chip:'Alerta' };
+  return { cls:'r', label:'🚫 Reprovado', chip:'Reprovado' };
 }
 
-// ─── ADD MEMBER ──────────────────────────────────────────────────────────────
+// ── TYPE SELECT ───────────────────────────────────────────────────────────────
+
+function selectType(el) {
+  document.querySelectorAll('.type-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedType = el.dataset.type;
+}
+
+// ── ADD MEMBER ────────────────────────────────────────────────────────────────
 
 function addMember() {
   const name = document.getElementById('new-name').value.trim();
   const role = document.getElementById('new-role').value.trim();
-  if (!name) { alert('Digite o nome do membro.'); return; }
+  if (!name) { toast('Digite o nome do membro'); return; }
   members.push({ id: Date.now(), name, role: role || 'Membro' });
   save();
   document.getElementById('new-name').value = '';
   document.getElementById('new-role').value = '';
   render();
+  toast('✅ ' + name + ' adicionado!');
 }
 
-// ─── ADD OCCURRENCE ──────────────────────────────────────────────────────────
+function removeMember(id) {
+  if (!confirm('Remover este membro e todas as suas ocorrências?')) return;
+  members = members.filter(m => m.id !== id);
+  occs = occs.filter(o => o.memberId !== id);
+  save();
+  render();
+}
+
+// ── ADD OCCURRENCE ────────────────────────────────────────────────────────────
 
 function addOccurrence() {
   const memberId = Number(document.getElementById('occ-member').value);
   const date = document.getElementById('occ-date').value;
-  const type = document.getElementById('occ-type').value;
   const note = document.getElementById('occ-note').value.trim();
-
-  if (!memberId) { alert('Selecione um membro.'); return; }
-  if (!date) { alert('Selecione a data.'); return; }
-
-  occurrences.push({ id: Date.now(), memberId, date, type, note });
+  if (!memberId) { toast('Selecione um membro'); return; }
+  if (!date) { toast('Selecione a data'); return; }
+  occs.push({ id: Date.now(), memberId, date, type: selectedType, note });
   save();
   document.getElementById('occ-note').value = '';
+  toast('✅ Ocorrência registrada!');
   render();
 }
 
-function removeOccurrence(id) {
-  occurrences = occurrences.filter(o => o.id !== id);
+function removeOcc(id) {
+  occs = occs.filter(o => o.id !== id);
   save();
   render();
 }
 
-// ─── STATUS ──────────────────────────────────────────────────────────────────
+// ── TOAST ─────────────────────────────────────────────────────────────────────
 
-function getStatus(pts) {
-  if (pts <= 3) return { label: '✅ OK', cls: 'green-card', dot: '🟢' };
-  if (pts <= 6) return { label: '⚠️ Alerta', cls: 'yellow-card', dot: '🟡' };
-  return { label: '🚫 Reprovado', cls: 'red-card', dot: '🔴' };
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-// ─── RENDER ──────────────────────────────────────────────────────────────────
+// ── HISTORY ───────────────────────────────────────────────────────────────────
 
-function render() {
-  // Month label
-  const label = viewDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-  document.getElementById('current-month-label').textContent = label.charAt(0).toUpperCase() + label.slice(1);
-
-  // Member select
-  const sel = document.getElementById('occ-member');
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">Selecione...</option>';
-  members.forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m.id;
-    opt.textContent = m.name;
-    if (String(m.id) === prev) opt.selected = true;
-    sel.appendChild(opt);
-  });
-
-  // Grid
-  const grid = document.getElementById('members-grid');
+function renderHistory() {
+  const hl = document.getElementById('hist-list');
   if (members.length === 0) {
-    grid.innerHTML = '<div class="empty-state">Nenhum membro cadastrado ainda. Adicione acima ☝️</div>';
+    hl.innerHTML = '<div class="hist-empty">Nenhum membro cadastrado ainda.</div>';
     return;
   }
 
-  const mk = monthKey(viewDate);
+  // Collect all months that have any occurrence
+  const allMonths = [...new Set(occs.map(o => o.date.slice(0,7)))].sort();
 
-  grid.innerHTML = members.map(m => {
-    const occs = occurrences.filter(o => o.memberId === m.id && occMonth(o) === mk)
-      .sort((a,b) => a.date.localeCompare(b.date));
+  if (allMonths.length === 0) {
+    hl.innerHTML = '<div class="hist-empty">Nenhuma ocorrência registrada ainda.<br>Registre ocorrências para ver o histórico 📋</div>';
+    return;
+  }
 
-    const totalPts = occs.reduce((sum, o) => sum + POINTS[o.type], 0);
-    const status = getStatus(totalPts);
-    const maxPts = 7;
-    const pct = Math.min(100, Math.round((totalPts / maxPts) * 100));
+  hl.innerHTML = members.map((m, mi) => {
+    // months this member appears in + months with 0 occs (show as clean)
+    const memberOccMonths = [...new Set(occs.filter(o => o.memberId === m.id).map(o => o.date.slice(0,7)))];
+    const displayMonths = [...new Set([...allMonths, ...memberOccMonths])].sort();
 
-    const occHTML = occs.length === 0
-      ? `<li class="no-occ">Sem ocorrências este mês 👍</li>`
-      : occs.map(o => `
-          <li class="occ-item">
-            <span>${formatDate(o.date)} — ${LABELS[o.type]}${o.note ? ` <em>(${o.note})</em>` : ''}</span>
-            <span style="display:flex;align-items:center;gap:8px">
-              <span class="occ-points">+${POINTS[o.type]}pt</span>
-              <button class="occ-remove" onclick="removeOccurrence(${o.id})" title="Remover">✕</button>
-            </span>
-          </li>`).join('');
+    const rows = displayMonths.map(mk => {
+      const mo = occs.filter(o => o.memberId === m.id && o.date.slice(0,7) === mk);
+      const pts = mo.reduce((s,o) => s + POINTS[o.type], 0);
+      const st = getStatus(pts);
+      const [yr, mn] = mk.split('-');
+      const monthName = new Date(Number(yr), Number(mn)-1, 1)
+        .toLocaleDateString('pt-BR', { month: 'long', year: '2-digit' });
 
-    const barColor = status.cls === 'green-card' ? '#2ecc71' : status.cls === 'yellow-card' ? '#f1c40f' : '#e74c3c';
+      const dotColor = st.cls === 'g' ? 'var(--green)' : st.cls === 'y' ? 'var(--yellow)' : 'var(--red)';
+      const txtColor = st.cls === 'g' ? 'var(--green)' : st.cls === 'y' ? 'var(--yellow)' : 'var(--red)';
+      const statusText = st.cls === 'g' ? '🟢 Verde' : st.cls === 'y' ? '🟡 Alerta' : '🔴 Reprovado';
 
+      return `
+        <div class="hist-month-row">
+          <span class="hist-month-name">${monthName}</span>
+          <div class="hist-dot" style="background:${dotColor}"></div>
+          <span class="hist-status-text" style="color:${txtColor}">${statusText}</span>
+          <span class="hist-pts">${pts} pt${pts !== 1 ? 's' : ''}</span>
+        </div>`;
+    }).join('');
+
+    const blockId = 'hist-block-' + mi;
     return `
-      <div class="member-card ${status.cls}">
-        <div class="status-bar"></div>
-        <div class="card-header">
-          <div>
-            <div class="member-name">${m.name}</div>
-            <div class="member-role">${m.role}</div>
+      <div class="hist-member-block">
+        <div class="hist-member-header" onclick="toggleHist('${blockId}', this)">
+          <div class="hist-avatar">${initials(m.name)}</div>
+          <div style="flex:1;min-width:0">
+            <div class="hist-member-name">${m.name}</div>
+            <div class="hist-member-role">${m.role}</div>
           </div>
-          <div class="score-badge">${totalPts}<span style="font-size:0.9rem;font-family:'DM Sans',sans-serif;font-weight:300;color:#888">pts</span></div>
+          <span class="hist-chevron">▼</span>
         </div>
-        <div class="card-body">
-          <div class="status-label">${status.label}</div>
-          <div class="prog-wrap">
-            <div class="prog-fill" style="width:${pct}%;background:${barColor}"></div>
-          </div>
-          <ul class="occurrences-list" style="margin-top:10px">${occHTML}</ul>
-        </div>
+        <div class="hist-months" id="${blockId}">${rows}</div>
       </div>`;
   }).join('');
 }
 
-function formatDate(d) {
-  const [y,m,day] = d.split('-');
-  return `${day}/${m}`;
+function toggleHist(id, header) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+  header.classList.toggle('expanded');
 }
 
-// ─── INIT ────────────────────────────────────────────────────────────────────
+// ── RENDER ────────────────────────────────────────────────────────────────────
 
-// Set today's date as default
+function initials(name) {
+  return name.split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase();
+}
+
+function fmt(d) { const [,m,day] = d.split('-'); return `${day}/${m}`; }
+
+function render() {
+  // month label
+  const lbl = viewDate.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+  document.getElementById('month-label').textContent = lbl;
+
+  // member select in register form
+  const sel = document.getElementById('occ-member');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Selecione...</option>';
+  members.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m.id; o.textContent = m.name;
+    if (String(m.id) === prev) o.selected = true;
+    sel.appendChild(o);
+  });
+
+  const mk = monthKey(viewDate);
+
+  // ── members page ──
+  const list = document.getElementById('members-list');
+  if (members.length === 0) {
+    list.innerHTML = '<div class="empty-msg">Nenhum membro ainda.<br>Vá em Equipe para adicionar ☝️</div>';
+  } else {
+    list.innerHTML = members.map(m => {
+      const mo = occs.filter(o => o.memberId === m.id && o.date.slice(0,7) === mk)
+        .sort((a,b) => a.date.localeCompare(b.date));
+      const pts = mo.reduce((s,o) => s + POINTS[o.type], 0);
+      const st = getStatus(pts);
+      const pct = Math.min(100, Math.round((pts/7)*100));
+
+      const rows = mo.length === 0
+        ? '<div class="no-occ-msg">Sem ocorrências este mês 👍</div>'
+        : mo.map(o => `
+            <div class="occ-row">
+              <div class="occ-info">
+                <strong>${LABELS[o.type]}</strong>
+                ${fmt(o.date)}${o.note ? ' · ' + o.note : ''}
+              </div>
+              <div class="occ-meta">
+                <span class="occ-pts" style="color:var(--red)">+${POINTS[o.type]}pt</span>
+                <button class="btn-del" onclick="removeOcc(${o.id})">✕</button>
+              </div>
+            </div>`).join('');
+
+      return `
+        <div class="member-card ${st.cls}">
+          <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+          <div class="card-top" onclick="toggleCard(this)">
+            <div class="avatar">${initials(m.name)}</div>
+            <div class="card-info">
+              <div class="card-name">${m.name}</div>
+              <div class="card-role">${m.role}</div>
+            </div>
+            <div class="card-right">
+              <div class="score-num">${pts}<span style="font-size:0.7rem;font-family:'DM Sans',sans-serif;font-weight:300;color:#666">pts</span></div>
+              <div class="status-chip">${st.chip}</div>
+            </div>
+          </div>
+          <div class="card-detail">
+            <div class="card-detail-inner">${rows}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── history page ──
+  renderHistory();
+
+  // ── team page ──
+  const tl = document.getElementById('team-list');
+  if (members.length === 0) {
+    tl.innerHTML = '<div class="empty-msg">Nenhum membro cadastrado ainda.</div>';
+  } else {
+    tl.innerHTML = members.map(m => `
+      <div class="team-item">
+        <div class="team-avatar">${initials(m.name)}</div>
+        <div class="team-info">
+          <div class="team-name">${m.name}</div>
+          <div class="team-role">${m.role}</div>
+        </div>
+        <button class="btn-remove" onclick="removeMember(${m.id})">🗑</button>
+      </div>`).join('');
+  }
+}
+
+function toggleCard(el) {
+  const detail = el.nextElementSibling;
+  detail.classList.toggle('open');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+
 document.getElementById('occ-date').value = new Date().toISOString().split('T')[0];
 
-// Demo members if empty
 if (members.length === 0) {
   members = [
     { id: 1, name: 'Ana Lima', role: 'Vocal Principal' },

@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Studio Score</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --text: #f0f0f0;
+    --muted: #777;
+    --green: #2ecc71;
+    --yellow: #f1c40f;
+    --red: #e74c3c;
+    --accent: #e67e22;
+    --green-dim: rgba(46,204,113,0.12);
+    --yellow-dim: rgba(241,196,15,0.12);
+    --red-dim: rgba(231,76,60,0.12);
+    --nav-h: 64px;
+    --header-h: 56px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overscroll-behavior: none;
+  }
+
+  /* ── HEADER ── */
+  .top-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--header-h);
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    z-index: 200;
+    gap: 10px;
+  }
+
+  .top-header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 3px;
+    color: var(--accent);
+    flex: 1;
+  }
+
+  .month-pill {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .month-pill button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    line-height: 1;
+    touch-action: manipulation;
+  }
+
+  .month-pill button:active { background: var(--surface2); }
+
+  #month-label {
+    font-size: 0.72rem;
+    color: var(--text);
+    white-space: nowrap;
+    padding: 0 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── SCROLL AREA ── */
+  .page {
+    position: fixed;
+    top: var(--header-h);
+    left: 0; right: 0;
+    bottom: calc(var(--nav-h) + var(--safe-bottom));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: none;
+    flex-direction: column;
+  }
+
+  .page.active { display: flex; }
+
+  .page-inner {
+    padding: 16px 14px 20px;
+    flex: 1;
+  }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: calc(var(--nav-h) + var(--safe-bottom));
+    padding-bottom: var(--safe-bottom);
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 200;
+  }
+
+  .nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: color 0.2s;
+    touch-action: manipulation;
+    padding-top: 6px;
+  }
+
+  .nav-btn .icon { font-size: 1.3rem; line-height: 1; }
+  .nav-btn.active { color: var(--accent); }
+
+  /* ── PAGE: MEMBROS ── */
+  .members-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .member-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.15s;
+  }
+
+  .member-card:active { transform: scale(0.98); }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  .avatar {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .card-info { flex: 1; min-width: 0; }
+
+  .card-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-role {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .card-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .score-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.7rem;
+    line-height: 1;
+  }
+
+  .status-chip {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 2px 8px;
+    border-radius: 100px;
+  }
+
+  .prog-bar {
+    height: 3px;
+    width: 100%;
+  }
+  .prog-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+
+  /* card accordion */
+  .card-detail {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    border-top: 0px solid var(--border);
+  }
+
+  .card-detail.open {
+    max-height: 500px;
+    border-top: 1px solid var(--border);
+  }
+
+  .card-detail-inner { padding: 10px 16px 14px; }
+
+  .occ-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+
+  .occ-row:last-child { border-bottom: none; }
+
+  .occ-info { font-size: 0.78rem; color: var(--muted); flex: 1; min-width: 0; }
+  .occ-info strong { display: block; color: var(--text); font-size: 0.8rem; }
+
+  .occ-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .occ-pts {
+    font-weight: 700;
+    font-size: 0.8rem;
+  }
+
+  .btn-del {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 0.75rem;
+    touch-action: manipulation;
+    flex-shrink: 0;
+  }
+
+  .btn-del:active { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+  .no-occ-msg {
+    font-size: 0.8rem;
+    color: #444;
+    font-style: italic;
+    padding: 6px 0;
+  }
+
+  /* green/yellow/red theming */
+  .g .avatar { background: var(--green-dim); color: var(--green); }
+  .g .score-num { color: var(--green); }
+  .g .status-chip { background: var(--green-dim); color: var(--green); }
+  .g .prog-fill { background: var(--green); }
+
+  .y .avatar { background: var(--yellow-dim); color: var(--yellow); }
+  .y .score-num { color: var(--yellow); }
+  .y .status-chip { background: var(--yellow-dim); color: var(--yellow); }
+  .y .prog-fill { background: var(--yellow); }
+
+  .r .avatar { background: var(--red-dim); color: var(--red); }
+  .r .score-num { color: var(--red); }
+  .r .status-chip { background: var(--red-dim); color: var(--red); }
+  .r .prog-fill { background: var(--red); }
+
+  /* ── PAGE: REGISTRAR ── */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 16px;
+    margin-bottom: 14px;
+  }
+
+  .form-card h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .field { margin-bottom: 12px; }
+
+  .field label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .field select,
+  .field input[type="date"],
+  .field input[type="text"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .field select:focus,
+  .field input:focus { border-color: var(--accent); }
+
+  .big-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: opacity 0.2s;
+    margin-top: 4px;
+  }
+
+  .big-btn:active { opacity: 0.8; }
+
+  /* type grid */
+  .type-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .type-opt {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    color: var(--muted);
+    cursor: pointer;
+    text-align: center;
+    touch-action: manipulation;
+    transition: all 0.15s;
+    line-height: 1.3;
+  }
+
+  .type-opt .type-icon { font-size: 1.2rem; display: block; margin-bottom: 4px; }
+  .type-opt .type-pts { font-size: 0.65rem; color: #555; display: block; margin-top: 2px; }
+
+  .type-opt.selected {
+    border-color: var(--accent);
+    background: rgba(230,126,34,0.1);
+    color: var(--text);
+  }
+
+  .type-opt.selected .type-pts { color: var(--accent); }
+
+  /* ── PAGE: LEGENDA ── */
+  .legend-section { margin-bottom: 16px; }
+
+  .legend-section h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    font-size: 1rem;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .rule-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    font-size: 0.88rem;
+  }
+
+  .rule-pts {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+  }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 8px;
+  }
+
+  .status-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+  .status-info { flex: 1; }
+  .status-info strong { display: block; font-size: 0.88rem; }
+  .status-info small { font-size: 0.75rem; color: var(--muted); }
+
+  /* ── PAGE: EQUIPE ── */
+  .add-form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 16px;
+    margin-bottom: 16px;
+  }
+
+  .add-form-card h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .team-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .team-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+
+  .team-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .team-info { flex: 1; min-width: 0; }
+  .team-name { font-weight: 600; font-size: 0.9rem; }
+  .team-role { font-size: 0.72rem; color: var(--muted); }
+
+  .btn-remove {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    touch-action: manipulation;
+  }
+
+  .btn-remove:active { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+  .empty-msg {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    padding: 32px 0;
+  }
+
+  /* toast */
+  .toast {
+    position: fixed;
+    bottom: calc(var(--nav-h) + var(--safe-bottom) + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.85rem;
+    padding: 10px 18px;
+    border-radius: 100px;
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 300;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="top-header">
+  <h1>🎵 Studio Score</h1>
+  <div class="month-pill">
+    <button onclick="changeMonth(-1)">◀</button>
+    <span id="month-label"></span>
+    <button onclick="changeMonth(1)">▶</button>
+  </div>
+</header>
+
+<!-- PAGE: MEMBROS -->
+<div class="page active" id="page-home">
+  <div class="page-inner">
+    <div class="members-list" id="members-list">
+      <div class="empty-msg">Nenhum membro ainda.<br>Vá em Equipe para adicionar ☝️</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: REGISTRAR -->
+<div class="page" id="page-reg">
+  <div class="page-inner">
+    <div class="form-card">
+      <h3>📋 Registrar Ocorrência</h3>
+
+      <div class="field">
+        <label>Membro</label>
+        <select id="occ-member"><option value="">Selecione...</option></select>
+      </div>
+
+      <div class="field">
+        <label>Data</label>
+        <input type="date" id="occ-date">
+      </div>
+
+      <div class="field">
+        <label>Tipo de Ocorrência</label>
+        <div class="type-grid">
+          <div class="type-opt selected" data-type="falta_ensaio" onclick="selectType(this)">
+            <span class="type-icon">🎶</span>
+            Falta no Ensaio
+            <span class="type-pts">−2 pts</span>
+          </div>
+          <div class="type-opt" data-type="atraso_ensaio" onclick="selectType(this)">
+            <span class="type-icon">⏰</span>
+            Atraso no Ensaio
+            <span class="type-pts">−1 pt</span>
+          </div>
+          <div class="type-opt" data-type="falta_agenda" onclick="selectType(this)">
+            <span class="type-icon">📅</span>
+            Falta na Agenda
+            <span class="type-pts">−3 pts</span>
+          </div>
+          <div class="type-opt" data-type="atraso_agenda" onclick="selectType(this)">
+            <span class="type-icon">🕐</span>
+            Atraso na Agenda
+            <span class="type-pts">−2 pts</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Observação (opcional)</label>
+        <input type="text" id="occ-note" placeholder="Ex: 20 min de atraso...">
+      </div>
+
+      <button class="big-btn" onclick="addOccurrence()">✔ Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: LEGENDA -->
+<div class="page" id="page-info">
+  <div class="page-inner">
+    <div class="legend-section">
+      <h3>Pontuação por Ocorrência</h3>
+      <div class="rule-row">
+        <span>🎶 Falta no ensaio</span>
+        <span class="rule-pts" style="color:var(--red)">2 pts</span>
+      </div>
+      <div class="rule-row">
+        <span>⏰ Atraso no ensaio</span>
+        <span class="rule-pts" style="color:var(--yellow)">1 pt</span>
+      </div>
+      <div class="rule-row">
+        <span>📅 Falta na agenda</span>
+        <span class="rule-pts" style="color:var(--red)">3 pts</span>
+      </div>
+      <div class="rule-row">
+        <span>🕐 Atraso na agenda</span>
+        <span class="rule-pts" style="color:var(--yellow)">2 pts</span>
+      </div>
+    </div>
+
+    <div class="legend-section">
+      <h3>Status dos Membros</h3>
+      <div class="status-row">
+        <div class="status-dot" style="background:var(--green)"></div>
+        <div class="status-info">
+          <strong>🟢 Verde — OK</strong>
+          <small>0 a 3 pontos no mês</small>
+        </div>
+      </div>
+      <div class="status-row">
+        <div class="status-dot" style="background:var(--yellow)"></div>
+        <div class="status-info">
+          <strong>🟡 Alerta</strong>
+          <small>4 a 6 pontos — atenção necessária</small>
+        </div>
+      </div>
+      <div class="status-row">
+        <div class="status-dot" style="background:var(--red)"></div>
+        <div class="status-info">
+          <strong>🔴 Reprovado</strong>
+          <small>7+ pontos — fora das próximas agendas / candidato a backup</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: EQUIPE -->
+<div class="page" id="page-team">
+  <div class="page-inner">
+    <div class="add-form-card">
+      <h3>➕ Novo Membro</h3>
+      <div class="field">
+        <label>Nome</label>
+        <input type="text" id="new-name" placeholder="Ex: João Silva">
+      </div>
+      <div class="field">
+        <label>Função</label>
+        <input type="text" id="new-role" placeholder="Ex: Vocal, Guitarra...">
+      </div>
+      <button class="big-btn" onclick="addMember()">Adicionar à Equipe</button>
+    </div>
+
+    <div class="team-list" id="team-list">
+      <div class="empty-msg">Nenhum membro cadastrado ainda.</div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="goPage('home', this)">
+    <span class="icon">👥</span>
+    Membros
+  </button>
+  <button class="nav-btn" onclick="goPage('reg', this)">
+    <span class="icon">✏️</span>
+    Registrar
+  </button>
+  <button class="nav-btn" onclick="goPage('info', this)">
+    <span class="icon">ℹ️</span>
+    Regras
+  </button>
+  <button class="nav-btn" onclick="goPage('team', this)">
+    <span class="icon">⚙️</span>
+    Equipe
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+
+const POINTS = { falta_ensaio:2, atraso_ensaio:1, falta_agenda:3, atraso_agenda:2 };
+const LABELS = {
+  falta_ensaio:'Falta — Ensaio',
+  atraso_ensaio:'Atraso — Ensaio',
+  falta_agenda:'Falta — Agenda',
+  atraso_agenda:'Atraso — Agenda'
+};
+
+let members = JSON.parse(localStorage.getItem('ss_members') || '[]');
+let occs = JSON.parse(localStorage.getItem('ss_occs') || '[]');
+let viewDate = new Date();
+let selectedType = 'falta_ensaio';
+
+function save() {
+  localStorage.setItem('ss_members', JSON.stringify(members));
+  localStorage.setItem('ss_occs', JSON.stringify(occs));
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+
+function goPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  btn.classList.add('active');
+  render();
+}
+
+// ── MONTH ─────────────────────────────────────────────────────────────────────
+
+function changeMonth(d) {
+  viewDate.setMonth(viewDate.getMonth() + d);
+  render();
+}
+
+function monthKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+}
+
+// ── STATUS ────────────────────────────────────────────────────────────────────
+
+function getStatus(pts) {
+  if (pts <= 3) return { cls:'g', label:'✅ OK', chip:'OK' };
+  if (pts <= 6) return { cls:'y', label:'⚠️ Alerta', chip:'Alerta' };
+  return { cls:'r', label:'🚫 Reprovado', chip:'Reprovado' };
+}
+
+// ── TYPE SELECT ───────────────────────────────────────────────────────────────
+
+function selectType(el) {
+  document.querySelectorAll('.type-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedType = el.dataset.type;
+}
+
+// ── ADD MEMBER ────────────────────────────────────────────────────────────────
+
+function addMember() {
+  const name = document.getElementById('new-name').value.trim();
+  const role = document.getElementById('new-role').value.trim();
+  if (!name) { toast('Digite o nome do membro'); return; }
+  members.push({ id: Date.now(), name, role: role || 'Membro' });
+  save();
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-role').value = '';
+  render();
+  toast('✅ ' + name + ' adicionado!');
+}
+
+function removeMember(id) {
+  if (!confirm('Remover este membro e todas as suas ocorrências?')) return;
+  members = members.filter(m => m.id !== id);
+  occs = occs.filter(o => o.memberId !== id);
+  save();
+  render();
+}
+
+// ── ADD OCCURRENCE ────────────────────────────────────────────────────────────
+
+function addOccurrence() {
+  const memberId = Number(document.getElementById('occ-member').value);
+  const date = document.getElementById('occ-date').value;
+  const note = document.getElementById('occ-note').value.trim();
+  if (!memberId) { toast('Selecione um membro'); return; }
+  if (!date) { toast('Selecione a data'); return; }
+  occs.push({ id: Date.now(), memberId, date, type: selectedType, note });
+  save();
+  document.getElementById('occ-note').value = '';
+  toast('✅ Ocorrência registrada!');
+  render();
+}
+
+function removeOcc(id) {
+  occs = occs.filter(o => o.id !== id);
+  save();
+  render();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+
+function initials(name) {
+  return name.split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase();
+}
+
+function fmt(d) { const [,m,day] = d.split('-'); return `${day}/${m}`; }
+
+function render() {
+  // month label
+  const lbl = viewDate.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+  document.getElementById('month-label').textContent = lbl;
+
+  // member select in register form
+  const sel = document.getElementById('occ-member');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Selecione...</option>';
+  members.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m.id; o.textContent = m.name;
+    if (String(m.id) === prev) o.selected = true;
+    sel.appendChild(o);
+  });
+
+  const mk = monthKey(viewDate);
+
+  // ── members page ──
+  const list = document.getElementById('members-list');
+  if (members.length === 0) {
+    list.innerHTML = '<div class="empty-msg">Nenhum membro ainda.<br>Vá em Equipe para adicionar ☝️</div>';
+  } else {
+    list.innerHTML = members.map(m => {
+      const mo = occs.filter(o => o.memberId === m.id && o.date.slice(0,7) === mk)
+        .sort((a,b) => a.date.localeCompare(b.date));
+      const pts = mo.reduce((s,o) => s + POINTS[o.type], 0);
+      const st = getStatus(pts);
+      const pct = Math.min(100, Math.round((pts/7)*100));
+
+      const rows = mo.length === 0
+        ? '<div class="no-occ-msg">Sem ocorrências este mês 👍</div>'
+        : mo.map(o => `
+            <div class="occ-row">
+              <div class="occ-info">
+                <strong>${LABELS[o.type]}</strong>
+                ${fmt(o.date)}${o.note ? ' · ' + o.note : ''}
+              </div>
+              <div class="occ-meta">
+                <span class="occ-pts" style="color:var(--red)">+${POINTS[o.type]}pt</span>
+                <button class="btn-del" onclick="removeOcc(${o.id})">✕</button>
+              </div>
+            </div>`).join('');
+
+      return `
+        <div class="member-card ${st.cls}">
+          <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+          <div class="card-top" onclick="toggleCard(this)">
+            <div class="avatar">${initials(m.name)}</div>
+            <div class="card-info">
+              <div class="card-name">${m.name}</div>
+              <div class="card-role">${m.role}</div>
+            </div>
+            <div class="card-right">
+              <div class="score-num">${pts}<span style="font-size:0.7rem;font-family:'DM Sans',sans-serif;font-weight:300;color:#666">pts</span></div>
+              <div class="status-chip">${st.chip}</div>
+            </div>
+          </div>
+          <div class="card-detail">
+            <div class="card-detail-inner">${rows}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── team page ──
+  const tl = document.getElementById('team-list');
+  if (members.length === 0) {
+    tl.innerHTML = '<div class="empty-msg">Nenhum membro cadastrado ainda.</div>';
+  } else {
+    tl.innerHTML = members.map(m => `
+      <div class="team-item">
+        <div class="team-avatar">${initials(m.name)}</div>
+        <div class="team-info">
+          <div class="team-name">${m.name}</div>
+          <div class="team-role">${m.role}</div>
+        </div>
+        <button class="btn-remove" onclick="removeMember(${m.id})">🗑</button>
+      </div>`).join('');
+  }
+}
+
+function toggleCard(el) {
+  const detail = el.nextElementSibling;
+  detail.classList.toggle('open');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+
+document.getElementById('occ-date').value = new Date().toISOString().split('T')[0];
+
+if (members.length === 0) {
+  members = [
+    { id: 1, name: 'Ana Lima', role: 'Vocal Principal' },
+    { id: 2, name: 'Bruno Costa', role: 'Guitarra' },
+    { id: 3, name: 'Carla Nunes', role: 'Backing Vocal' },
+    { id: 4, name: 'Diego Ramos', role: 'Bateria' },
+  ];
+  save();
+}
+
+render();
+</script>
+</body>
+</html>

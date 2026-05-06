@@ -626,6 +626,14 @@
 </head>
 <body>
 
+<!-- LOADING -->
+<div id="loading-screen" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0d0d0d;flex-direction:column;gap:16px;z-index:999">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:4px;color:#e67e22">🎵 STUDIO SCORE</div>
+  <div style="color:#555;font-size:0.85rem;font-family:'DM Sans',sans-serif">Carregando dados...</div>
+</div>
+
+<div id="app-root" style="display:none;flex-direction:column;height:100%">
+
 <!-- HEADER -->
 <header class="top-header">
   <h1>🎵 Studio Score</h1>
@@ -804,6 +812,8 @@
 
 <div class="toast" id="toast"></div>
 
+</div><!-- /app-root -->
+
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────────────
 
@@ -815,14 +825,35 @@ const LABELS = {
   atraso_agenda:'Atraso — Agenda'
 };
 
-let members = JSON.parse(localStorage.getItem('ss_members') || '[]');
-let occs = JSON.parse(localStorage.getItem('ss_occs') || '[]');
+let members = [];
+let occs = [];
 let viewDate = new Date();
 let selectedType = 'falta_ensaio';
+let appReady = false;
 
-function save() {
-  localStorage.setItem('ss_members', JSON.stringify(members));
-  localStorage.setItem('ss_occs', JSON.stringify(occs));
+async function save() {
+  try {
+    await window.storage.set('ss_data', JSON.stringify({ members, occs }));
+  } catch(e) { console.error('Erro ao salvar:', e); }
+}
+
+async function loadData() {
+  try {
+    const res = await window.storage.get('ss_data');
+    if (res && res.value) {
+      const parsed = JSON.parse(res.value);
+      members = parsed.members || [];
+      occs = parsed.occs || [];
+    }
+  } catch(e) {
+    members = [];
+    occs = [];
+  }
+  appReady = true;
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('app-root').style.display = 'flex';
+  document.getElementById('occ-date').value = new Date().toISOString().split('T')[0];
+  render();
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
@@ -1081,17 +1112,7 @@ function toggleCard(el) {
 
 document.getElementById('occ-date').value = new Date().toISOString().split('T')[0];
 
-if (members.length === 0) {
-  members = [
-    { id: 1, name: 'Ana Lima', role: 'Vocal Principal' },
-    { id: 2, name: 'Bruno Costa', role: 'Guitarra' },
-    { id: 3, name: 'Carla Nunes', role: 'Backing Vocal' },
-    { id: 4, name: 'Diego Ramos', role: 'Bateria' },
-  ];
-  save();
-}
-
-render();
+loadData();
 </script>
 </body>
 </html>

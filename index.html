@@ -149,8 +149,8 @@
 <div class="page" id="page-reg">
   <div class="page-inner">
     <div class="save-banner" id="save-banner">
-      <p>Você tem alterações não salvas.<br>Clique abaixo para o <strong>Claude gravar os dados permanentemente</strong> no arquivo.</p>
-      <button class="save-btn" onclick="triggerSave()">💾 Salvar dados permanentemente</button>
+      <p>Você tem alterações não salvas.<br>Clique abaixo para <strong>gravar os dados permanentemente</strong>.</p>
+      <button class="save-btn" onclick="triggerSave()">💾 Salvar dados</button>
     </div>
     <div class="form-card">
       <h3>📋 Registrar Ocorrência</h3>
@@ -199,8 +199,8 @@
 <div class="page" id="page-team">
   <div class="page-inner">
     <div class="save-banner" id="save-banner-team">
-      <p>Você tem alterações não salvas.<br>Clique abaixo para o <strong>Claude gravar os dados permanentemente</strong> no arquivo.</p>
-      <button class="save-btn" onclick="triggerSave()">💾 Salvar dados permanentemente</button>
+      <p>Você tem alterações não salvas.<br>Clique abaixo para <strong>gravar os dados permanentemente</strong>.</p>
+      <button class="save-btn" onclick="triggerSave()">💾 Salvar dados</button>
     </div>
     <div class="add-form-card">
       <h3>➕ Novo Membro</h3>
@@ -224,7 +224,7 @@
 
 <script>
 // ── DADOS SALVOS (Claude atualiza esta linha ao salvar) ───────────────────────
-const SAVED_DATA = {"members":[],"occs":[]};
+const SAVED_DATA = {"members":[{"id":1778098780615,"name":"joao","role":"aaa"}],"occs":[]};
 // ─────────────────────────────────────────────────────────────────────────────
 
 const POINTS = { falta_ensaio:2, atraso_ensaio:1, falta_agenda:3, atraso_agenda:2 };
